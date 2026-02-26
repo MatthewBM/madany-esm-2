@@ -13,6 +13,7 @@ TOTAL_REQUESTS = 50
 CONCURRENT_USERS = 5
 BATCH_SIZE = 16
 MAX_SEQ_LENGTH = 1022
+RANDOM_SEED = 22
 AMINO_ACIDS = "ACDEFGHIKLMNPQRSTVWXY"
 
 def generate_random_sequence(length):
@@ -30,7 +31,8 @@ def send_request(_):
         return (time.perf_counter() - start, False)
 
 if __name__ == "__main__":
-    print("Starting benchmark...")
+    random.seed(RANDOM_SEED)
+    print(f"Starting benchmark (Seed: {RANDOM_SEED})...")
 
     requests.post(API_URL, json={"sequences": ["MAPLR"]}, timeout=10)
 

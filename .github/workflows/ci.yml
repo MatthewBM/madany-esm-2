@@ -1,0 +1,69 @@
+name: CI Pipeline
+
+on: [push, pull_request]
+
+jobs:
+  static-analysis:
+    name: Lint, Type Check, and Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install Analysis Tools
+        run: pip install flake8 mypy bandit types-requests types-PyYAML
+      - name: Lint (flake8)
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      - name: Security (Bandit)
+        run: bandit -r . -ll --skip B104
+      - name: Types (Mypy)
+        run: mypy . --ignore-missing-imports --check-untyped-defs
+
+  unit-testing:
+    name: Run Pytest (Mocked GPU)
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: pip install pytest fastapi httpx torch transformers==4.44.2 pydantic pydantic-settings
+      - name: Run Tests
+        env:
+          ESM2_MOCK_GPU: "True"
+          ESM2_MOCK_GPU_COUNT: "4"
+          PYTHONPATH: "."
+        run: pytest tests/
+
+  docker-check:
+    name: Dockerfile Build Validation
+    needs: unit-testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build (Dry Run)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  k8s-validation:
+    name: Validate Kubernetes Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Kubeconform
+        uses: bmuschko/setup-kubeconform@v1
+        with:
+          kubeconform-version: '0.6.3'
+      - name: Run Kubeconform
+        run: kubeconform -summary -strict kubernetes/

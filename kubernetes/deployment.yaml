@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: esm2-inference
+  labels:
+    app: esm2-inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: esm2-inference
+  template:
+    metadata:
+      labels:
+        app: esm2-inference
+    spec:
+      #nodeSelector:
+      #  node.kubernetes.io/instance-type: g5.48xlarge
+
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+
+      containers:
+      - name: esm2-api
+        image: madany/esm2-inference:latest
+        ports:
+        - containerPort: 8000
+
+        envFrom:
+        - configMapRef:
+            name: esm2-inference-config
+
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            #nvidia.com/gpu: 8
+            #memory: "256Gi"
+            #cpu: "90"
+          requests:
+            nvidia.com/gpu: 1
+            #nvidia.com/gpu: 8
+            #memory: "128Gi"
+            #cpu: "64"
+
+        volumeMounts:
+        - name: dshm
+          mountPath: /dev/shm
+
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          failureThreshold: 30
+          periodSeconds: 10
+
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+      volumes:
+      - name: dshm
+        emptyDir: {}
+        #emptyDir:
+        #  medium: Memory
+        #  sizeLimit: "8Gi"

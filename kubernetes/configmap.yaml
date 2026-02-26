@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: esm2-inference-config
+  labels:
+    app: esm2-inference
+data:
+  ESM2_LOG_LEVEL: "INFO"
+  ESM2_WORKERS_PER_GPU: "2"
+  ESM2_INFERENCE_PRECISION: "bfloat16"
+  ESM2_OUTPUT_PRECISION: "float32"
+  ESM2_MAX_SEQUENCE_LENGTH: "1022"

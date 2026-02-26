@@ -7,7 +7,7 @@ up workers to handle batch GPU processing
 
 #### Scaling
 
-![Batch GPU Processing Architecture](assets/gpu_architecture.png)
+![Batch GPU Processing Architecture](assets/gpu_diagram.png)
 
 The application uses a master-worker architecture.
 Workers are launched using `ProcessPoolExecutor` from `concurrent.futures`

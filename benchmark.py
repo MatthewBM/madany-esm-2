@@ -1,6 +1,6 @@
 """
 Benchmarking script to run against api server
-Collects and prints metrics related to seqs per seq and latency
+Collects and prints metrics related to seqs per sec and latency
 """
 import time
 import requests
